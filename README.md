@@ -25,9 +25,11 @@ You can now create further incremental backups, or continue with a new full back
 ##### Prepare a specific backup to be restored:
     $ xtrabackup-rb prepare -d /tmp/backup -o /tmp/backup/prepared -b /tmp/backup/inc/2014-07-28_13-52-48 -u root -p 123456789 
  
+##### List backups:
+    $ xtrabackup-rb list -d /tmp/backup
  
 ## TODO
  - Cleanup backups functionality
- - List backups or chains of backups
+ - Graph view of backups
  - Useful tests
  - Make code more Rubyish (this is my first Ruby "project")
