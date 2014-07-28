@@ -3,7 +3,7 @@ $:.push File.expand_path("../lib", __FILE__)
 
 Gem::Specification.new do |s|
   s.name         = "xtrabackup-rb"
-  s.summary      = "Module and command-line wrapper around innobackupex."
+  s.summary      = "Ruby module and command-line wrapper around innobackupex."
   s.description  = <<EOF
 Supports full and incremental backups and preparation steps for restoring them.
 EOF
