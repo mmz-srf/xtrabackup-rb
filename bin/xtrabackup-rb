@@ -1,0 +1,63 @@
+#!/usr/bin/env ruby
+# encoding: UTF-8
+
+require 'optparse'
+require 'ostruct'
+require_relative '../lib/xtrabackup/backup'
+require_relative '../lib/xtrabackup/prepare'
+
+def self.parse_backup(args)
+  options = OpenStruct.new
+
+  OptionParser.new do |opts|
+    opts.banner = "Usage: #{File.basename($PROGRAM_NAME)} backup [options]"
+
+    opts.on("-t", "--type type", 'Either full of incremental') { |o| options.type = o }
+    opts.on("-d", "--directory directory", 'The basedir of all backups') { |o| options.dir = o }
+    opts.on("-u user", "--user user", 'The mysql user to use for the backup') { |o| options.username = o }
+    opts.on("-p password", "--password password", 'The mysql users password') { |o| options.password = o }
+    opts.on_tail("-h", "--help", "Show this message") { puts opts; exit 0}
+  end.parse!(args)
+
+  options
+end
+
+def self.parse_prepare(args)
+  options = OpenStruct.new
+
+  OptionParser.new do |opts|
+    opts.banner = "Usage: #{File.basename($PROGRAM_NAME)} prepare [options]"
+
+    opts.on("-d", "--directory directory", 'The basedir of all backups') { |o| options.dir = o }
+    opts.on("-b", "--backup directory", 'A specific backup directory') { |o| options.backup = o }
+    opts.on("-o", "--out directory", 'The directory where the prepared backup should go to.') { |o| options.out_dir = o }
+    opts.on("-u user", "--user user", 'The mysql user to use for the backup') { |o| options.username = o }
+    opts.on("-p password", "--password password", 'The mysql users password') { |o| options.password = o }
+    opts.on_tail("-h", "--help", "Show this message") { puts opts; exit 0}
+  end.parse!(args)
+
+  options
+end
+
+begin
+  case ARGV[0]
+    when 'backup'
+      options = parse_backup(ARGV)
+      Xtrabackup::innobackupex(options.type, options.dir, options.username, options.password)
+    when 'prepare'
+      options = parse_prepare(ARGV)
+      Xtrabackup::prepare(options.out_dir, options.dir, options.backup, options.username, options.password)
+    when 'cleanup'
+      puts 'Not implemented yet!'
+    else
+      puts "Usage: #{File.basename($PROGRAM_NAME)} [command] [options]"
+      puts "Available commands:"
+      ['backup', 'prepare', 'cleanup'].each {|c| puts "  - #{c}"}
+      puts
+      puts "Check #{File.basename($PROGRAM_NAME)} [command] --help for available command options."
+  end
+
+rescue Exception => e
+  puts e.message
+  exit 1
+end
