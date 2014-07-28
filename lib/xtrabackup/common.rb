@@ -62,7 +62,7 @@ module Xtrabackup
       end
     end
 
-    full_backup = full_backups.find {|b| b.to_lsn == chain.first.from_lsn}
+    full_backup = full_backups.find {|b| b.to_lsn == chain.last.from_lsn}
     full_backup ? chain << full_backup : chain = []
     chain.reverse
   end
@@ -95,6 +95,14 @@ module Xtrabackup
     result << ' ' if !result.empty?
     result << "--password=#{password}" if password
     result
+  end
+
+  def self.assert_arg_not_empty(arg, value)
+    raise ArgumentError, "arg #{arg} is nil" if value.nil?
+    raise ArgumentError, "arg #{arg} is empty" if value.empty?
+    case value
+      when String then raise ArgumentError, "Argument #{arg} is blank" if value =~ /^\s*$/
+    end
   end
 
 end

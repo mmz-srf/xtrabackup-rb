@@ -59,5 +59,6 @@ begin
 
 rescue Exception => e
   puts e.message
+  puts e.backtrace.join("\n")
   exit 1
 end

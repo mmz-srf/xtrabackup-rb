@@ -20,9 +20,6 @@ module Xtrabackup
 
     puts "Performing full backup..."
     path = self.innobackupex_cmd(self.innobackupex_args_credentials(username, password) << ' ' << full_backup_dir)
-    latest_link = dir + File::SEPARATOR + 'latest_full'
-    FileUtils.rm_f(latest_link)
-    File.symlink(path, latest_link)
     puts "Full backup finished: #{path}"
   end
 

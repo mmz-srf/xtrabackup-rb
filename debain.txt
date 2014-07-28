@@ -1,0 +1,16 @@
+Turn the gem into a (dirty) debian package:
+
+> gem install fpm
+> rake build
+> GEM_HOME=opt/xtrabackup-rb gem install --no-ri --no-rdoc pkg/xtrabackup-rb-0.0.0.gem
+> mkdir -p usr/bin
+> cat <<EOF >usr/bin/xtrabackup-rb
+  #!/bin/sh
+  set -e
+  export GEM_HOME="/opt/xtrabackup-rb"
+  exec \${GEM_HOME}/bin/xtrabackup-rb \$@
+  EOF
+> chmod +x usr/bin/xtrabackup-rb
+> fpm -s dir -t deb -p pkg -n xtrabackup-rb -v 0.0.0 usr opt
+> rm -r opt/ usr/
+> ls pkg/*.deb

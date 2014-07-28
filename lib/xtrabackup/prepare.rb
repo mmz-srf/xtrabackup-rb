@@ -6,20 +6,23 @@ module Xtrabackup
 
   # prepares the latest available backup
   def self.prepare(output_dir, backup_base_dir, backup_dir=nil, username=nil, password=nil)
+    self.assert_arg_not_empty(method(__method__).parameters[0][1], output_dir)
+    self.assert_arg_not_empty(method(__method__).parameters[1][1], backup_base_dir)
+
     if backup_dir.nil?
       self.prepare_latest(output_dir, backup_base_dir, username, password)
     else
-      self.prepare_specific(output_dir, backup_dir, username, password)
+      self.prepare_specific(output_dir, backup_base_dir, backup_dir, username, password)
     end
   end
 
   # prepares the latest available backup
   def self.prepare_latest(output_dir, backup_base_dir, username=nil, password=nil)
-    full_backups = self.find_backups(backup_base_dir + File::SEPARATOR + SUBDIR_FULL)
+    full_backups = self.find_backups(self.full_backup_path(backup_base_dir))
     raise "Cannot prepare backup: No full backup found in #{backup_base_dir}" if full_backups.empty?
 
     last_full = full_backups.last
-    inc_backups = self.find_backups(backup_base_dir + File::SEPARATOR + SUBDIR_INC)
+    inc_backups = self.find_backups(self.incremental_backup_path(backup_base_dir))
 
     if inc_backups.empty?
       puts 'No incremental backups found: Preparing the latest full backup...'
@@ -35,9 +38,16 @@ module Xtrabackup
   end
 
   # prepares a specific backup.
-  def self.prepare_specific(output_dir, full_backups, inc_backup, username=nil, password=nil)
-    puts "Preparing a specific backup is not implemented yet."
-    exit 1
+  def self.prepare_specific(output_dir, backup_base_dir, backup_dir, username=nil, password=nil)
+    backup = self.find_backup(backup_dir)
+
+    if backup.class == Xtrabackup::FullBackup
+      self.prepare_full(output_dir, backup, username, password)
+    elsif backup.class == Xtrabackup::IncBackup
+      full_backups = self.find_backups(self.full_backup_path(backup_base_dir))
+      inc_backups = self.find_backups(self.incremental_backup_path(backup_base_dir))
+      self.prepare_incremental(output_dir, full_backups, backup, inc_backups, username, password)
+    end
   end
 
   private
@@ -47,7 +57,7 @@ module Xtrabackup
     last_increment = chain.last
 
     # give the output subdirectory the name as the latest backup increment has
-    dest_dir = self.pre_prapare(output_dir, chain.first)
+    dest_dir = self.pre_prepare(output_dir, chain.first)
     new_dest_dir = output_dir + File::SEPARATOR + Pathname.new(last_increment.path).basename.to_s
     self.rmdir_if_exists(new_dest_dir)
     FileUtils.mv(dest_dir, new_dest_dir)
@@ -66,15 +76,19 @@ module Xtrabackup
       end
     end
 
+    puts "Prepare to rollback uncommited changes in #{dest_dir} ..."
+    self.innobackupex_cmd(self.innobackupex_args_credentials(username, password) + " --apply-log #{dest_dir}")
+    puts "Backup preparation finished. You can now halt mysqld and apply it with something like 'innobackupex --copy-back #{dest_dir} && chown -R mysql:mysql /var/lib/mysql'."
+
   end
 
   def self.prepare_full(output_dir, backup, username=nil, password=nil)
-    dest_dir = self.pre_prapare(output_dir, backup)
+    dest_dir = self.pre_prepare(output_dir, backup)
     puts "Preparing full backup in #{dest_dir}..."
     self.innobackupex_cmd(self.innobackupex_args_credentials(username, password) + " --apply-log #{dest_dir}")
   end
 
-  def self.pre_prapare(output_dir, full_backup)
+  def self.pre_prepare(output_dir, full_backup)
     dest_dir = output_dir + File::SEPARATOR + Pathname.new(full_backup.path).basename.to_s
     self.rmdir_if_exists(dest_dir)
 
