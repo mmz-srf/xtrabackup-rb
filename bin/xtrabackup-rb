@@ -3,8 +3,7 @@
 
 require 'optparse'
 require 'ostruct'
-require_relative '../lib/xtrabackup/backup'
-require_relative '../lib/xtrabackup/prepare'
+require_relative '../lib/xtrabackup'
 
 def self.parse_backup(args)
   options = OpenStruct.new
@@ -31,8 +30,33 @@ def self.parse_prepare(args)
     opts.on("-d", "--directory directory", 'The basedir of all backups') { |o| options.dir = o }
     opts.on("-b", "--backup directory", 'A specific backup directory') { |o| options.backup = o }
     opts.on("-o", "--out directory", 'The directory where the prepared backup should go to.') { |o| options.out_dir = o }
-    opts.on("-u user", "--user user", 'The mysql user to use for the backup') { |o| options.username = o }
-    opts.on("-p password", "--password password", 'The mysql users password') { |o| options.password = o }
+    opts.on_tail("-h", "--help", "Show this message") { puts opts; exit 0}
+  end.parse!(args)
+
+  options
+end
+
+def self.parse_cleanup(args)
+  options = OpenStruct.new
+
+  OptionParser.new do |opts|
+    opts.banner = "Usage: #{File.basename($PROGRAM_NAME)} cleanup [options]"
+
+    opts.on("-d", "--directory directory", 'The basedir of all backups') { |o| options.dir = o }
+    opts.on("-k", "--keep amount", 'Keep that many backup chains') { |o| options.keep = o }
+    opts.on_tail("-h", "--help", "Show this message") { puts opts; exit 0}
+  end.parse!(args)
+
+  options
+end
+
+def self.parse_list(args)
+  options = OpenStruct.new
+
+  OptionParser.new do |opts|
+    opts.banner = "Usage: #{File.basename($PROGRAM_NAME)} list [options]"
+
+    opts.on("-d", "--directory directory", 'The basedir of all backups') { |o| options.dir = o }
     opts.on_tail("-h", "--help", "Show this message") { puts opts; exit 0}
   end.parse!(args)
 
@@ -46,19 +70,23 @@ begin
       Xtrabackup::innobackupex(options.type, options.dir, options.username, options.password)
     when 'prepare'
       options = parse_prepare(ARGV)
-      Xtrabackup::prepare(options.out_dir, options.dir, options.backup, options.username, options.password)
+      Xtrabackup::prepare(options.out_dir, options.dir, options.backup)
     when 'cleanup'
-      puts 'Not implemented yet!'
+      options = parse_cleanup(ARGV)
+      Xtrabackup::cleanup(options.dir, options.keep)
+    when 'list'
+      options = parse_list(ARGV)
+      Xtrabackup::list(options.dir)
     else
       puts "Usage: #{File.basename($PROGRAM_NAME)} [command] [options]"
       puts "Available commands:"
-      ['backup', 'prepare', 'cleanup'].each {|c| puts "  - #{c}"}
+      ['backup', 'prepare', 'cleanup', 'list'].each {|c| puts "  - #{c}"}
       puts
       puts "Check #{File.basename($PROGRAM_NAME)} [command] --help for available command options."
   end
 
 rescue Exception => e
   puts e.message
-  puts e.backtrace.join("\n")
+  #puts e.backtrace.join("\n")
   exit 1
 end
