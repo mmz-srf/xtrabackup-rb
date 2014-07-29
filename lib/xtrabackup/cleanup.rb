@@ -4,6 +4,9 @@ require_relative 'common.rb'
 module Xtrabackup
 
   def self.cleanup(dir, keep)
+    self.assert_arg_not_empty(method(__method__).parameters[0][1], dir)
+    self.assert_arg_not_empty(method(__method__).parameters[1][1], keep)
+
     chains = self.backup_chains(dir)
     to_delete = chains.reverse[keep..-1] if chains
     remaining = chains - to_delete

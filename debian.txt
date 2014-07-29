@@ -11,6 +11,6 @@ export GEM_HOME="/opt/xtrabackup-rb"
 exec \${GEM_HOME}/bin/xtrabackup-rb \$@
 EOF
 > chmod +x usr/bin/xtrabackup-rb
-> fpm -s dir -t deb -p pkg -n xtrabackup-rb -v $(cat version.txt) usr opt
+> fpm -s dir -t deb -p pkg -a all -n xtrabackup-rb -v $(cat version.txt) usr opt
 > rm -r opt/ usr/
 > ls pkg/*.deb

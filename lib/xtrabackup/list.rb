@@ -4,6 +4,8 @@ require_relative 'domain.rb'
 module Xtrabackup
 
   def self.print_chains(dir)
+    self.assert_arg_not_empty(method(__method__).parameters[0][1], dir)
+
     self.backup_chains(dir).each do |chain|
       chain.each do |backup|
         case backup
