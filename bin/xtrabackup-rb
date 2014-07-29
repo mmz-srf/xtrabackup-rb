@@ -43,7 +43,7 @@ def self.parse_cleanup(args)
     opts.banner = "Usage: #{File.basename($PROGRAM_NAME)} cleanup [options]"
 
     opts.on("-d", "--directory directory", 'The basedir of all backups') { |o| options.dir = o }
-    opts.on("-k", "--keep amount", 'Keep that many backup chains') { |o| options.keep = o }
+    opts.on("-k", "--keep amount", Integer, 'Keep that many backup chains') { |o| options.keep = o }
     opts.on_tail("-h", "--help", "Show this message") { puts opts; exit 0}
   end.parse!(args)
 
@@ -76,7 +76,7 @@ begin
       Xtrabackup::cleanup(options.dir, options.keep)
     when 'list'
       options = parse_list(ARGV)
-      Xtrabackup::list(options.dir)
+      Xtrabackup::print_chains(options.dir)
     else
       puts "Usage: #{File.basename($PROGRAM_NAME)} [command] [options]"
       puts "Available commands:"

@@ -4,8 +4,6 @@ module Xtrabackup
   INNOBACKUPEX = 'innobackupex'
   CHECKPOINTS_FILE = 'xtrabackup_checkpoints'
 
-  private
-
   # Factory methods that creates an instance of Xtrabackup::Backup.
   def self.find_backup(path)
     checkpoints_file = path + File::SEPARATOR + CHECKPOINTS_FILE
@@ -25,6 +23,16 @@ module Xtrabackup
         self.find_backup(path + File::SEPARATOR + subdir)
       end
     end.compact.sort
+  end
+
+  # Returns an Array of all backup chains
+  def self.backup_chains(dir)
+    full_backups = self.find_backups(self.full_backup_path(dir))
+    inc_backups = self.find_backups(self.incremental_backup_path(dir))
+
+    full_backups.map do |full|
+      self.backup_chain_for_full(full, inc_backups)
+    end
   end
 
   # Returns an Array with a Xtrabackup:FullBackup at index 0 followed
@@ -66,6 +74,10 @@ module Xtrabackup
     full_backup ? chain << full_backup : chain = []
     chain.reverse
   end
+
+
+
+  private
 
   def self.full_backup_path(dir)
     dir + File::SEPARATOR + SUBDIR_FULL

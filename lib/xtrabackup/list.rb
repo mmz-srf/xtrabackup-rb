@@ -1,19 +1,20 @@
 require_relative 'common.rb'
+require_relative 'domain.rb'
 
 module Xtrabackup
 
-  def self.list(dir)
-    full_backups = self.find_backups(self.full_backup_path(dir))
-    inc_backups = self.find_backups(self.incremental_backup_path(dir))
-
-    full_backups.each do |full|
-      chain = self.backup_chain_for_full(full, inc_backups)
+  def self.print_chains(dir)
+    self.backup_chains(dir).each do |chain|
       chain.each do |backup|
-        prefix = backup != full ? '  -> ' : ''
-        puts "#{prefix}#{backup.from_lsn} -> #{backup.to_lsn}\t #{backup.path}"
+        case backup
+          when Xtrabackup::FullBackup
+            puts "#{backup.from_lsn} -> #{backup.to_lsn}#{' '*13}#{backup.path}"
+          when Xtrabackup::IncBackup
+            puts "  -> #{backup.from_lsn} -> #{backup.to_lsn}#{' '*2}#{backup.path}"
+        end
       end
       puts
     end
-  end
 
+  end
 end
