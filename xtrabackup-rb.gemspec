@@ -8,7 +8,7 @@ Gem::Specification.new do |s|
 Supports full and incremental backups and preparation steps for restoring them.
 EOF
   s.requirements = [ 'Ruby - tested with 1.9.3', 'Percona Xtrabackup' ]
-  s.version      = '0.0.0'
+  s.version      = File.read('version.txt')
   s.author       = 'Andreas Wirth'
   s.email        = 'andreas.wirth@srf.ch'
   s.homepage     = 'http://TODO'
