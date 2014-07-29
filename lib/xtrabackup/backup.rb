@@ -48,14 +48,4 @@ module Xtrabackup
 
   end
 
-  private
-
-  def self.assert_arg_not_empty(arg, value)
-    raise ArgumentError, "arg #{arg} is nil" if value.nil?
-    raise ArgumentError, "arg #{arg} is empty" if value.empty?
-    case value
-      when String then raise ArgumentError, "Argument #{arg} is blank" if value =~ /^\s*$/
-    end
-  end
-
 end
