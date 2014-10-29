@@ -19,7 +19,7 @@ You can now create further incremental backups, or continue with a new full back
 
 
 ##### Prepare the latest backup to be restored:
-    $ xtrabackup-rb prepare -d /tmp/backup -o /tmp/backup/prepared -u root -p 123456789
+    $ xtrabackup-rb prepare -d /tmp/backup -o /tmp/backup/prepared
 
 
 ##### Prepare a specific backup to be restored:
