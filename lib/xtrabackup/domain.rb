@@ -5,8 +5,8 @@ module Xtrabackup
 
     def initialize(path, from_lsn, to_lsn, compact)
       @path = path
-      @from_lsn = from_lsn
-      @to_lsn = to_lsn
+      @from_lsn = from_lsn.to_i
+      @to_lsn = to_lsn.to_i
       @compact = compact
     end
 
