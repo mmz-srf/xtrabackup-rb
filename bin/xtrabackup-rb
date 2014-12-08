@@ -30,6 +30,7 @@ def self.parse_prepare(args)
     opts.on("-d", "--directory directory", 'The basedir of all backups') { |o| options.dir = o }
     opts.on("-b", "--backup directory", 'A specific backup directory') { |o| options.backup = o }
     opts.on("-o", "--out directory", 'The directory where the prepared backup should go to.') { |o| options.out_dir = o }
+    opts.on("-t", "--temp directory", 'Directory used for a temporarty copy of the incremental backup.') { |o| options.increment_tmp_path = o }
     opts.on("-n", "--nodatedir", "Don't prepare in a [date] subdirectory." ) { options.nodatedir = true }
     opts.on_tail("-h", "--help", "Show this message") { puts opts; exit 0}
   end.parse!(args)
@@ -71,7 +72,7 @@ begin
       Xtrabackup::innobackupex(options.type, options.dir, options.username, options.password)
     when 'prepare'
       options = parse_prepare(ARGV)
-      Xtrabackup::prepare(options.out_dir, options.dir, options.backup, options.nodatedir)
+      Xtrabackup::prepare(options.out_dir, options.dir, options.backup, options.nodatedir, options.increment_tmp_path)
     when 'cleanup'
       options = parse_cleanup(ARGV)
       Xtrabackup::cleanup(options.dir, options.keep)

@@ -5,18 +5,18 @@ require_relative 'common.rb'
 module Xtrabackup
 
   # prepares the latest available backup
-  def self.prepare(output_dir, backup_base_dir, backup_dir=nil, no_date_dir=false)
+  def self.prepare(output_dir, backup_base_dir, backup_dir=nil, no_date_dir=false, increment_tmp_path=nil)
     self.assert_arg_not_empty(method(__method__).parameters[0][1], output_dir)
     self.assert_arg_not_empty(method(__method__).parameters[1][1], backup_base_dir)
     if backup_dir.nil?
-      self.prepare_latest(output_dir, backup_base_dir, no_date_dir)
+      self.prepare_latest(output_dir, backup_base_dir, no_date_dir, increment_tmp_path)
     else
-      self.prepare_specific(output_dir, backup_base_dir, backup_dir, no_date_dir)
+      self.prepare_specific(output_dir, backup_base_dir, backup_dir, no_date_dir, increment_tmp_path)
     end
   end
 
   # prepares the latest available backup
-  def self.prepare_latest(output_dir, backup_base_dir, no_date_dir)
+  def self.prepare_latest(output_dir, backup_base_dir, no_date_dir, increment_tmp_path)
     full_backups = self.find_backups(self.full_backup_path(backup_base_dir))
     raise "Cannot prepare backup: No full backup found in #{backup_base_dir}" if full_backups.empty?
 
@@ -31,13 +31,13 @@ module Xtrabackup
       self.prepare_full(output_dir, last_full, no_date_dir)
     else
       puts 'Preparing the latest incremental backup...'
-      self.prepare_incremental(output_dir, full_backups, inc_backups.last, inc_backups, no_date_dir)
+      self.prepare_incremental(output_dir, full_backups, inc_backups.last, inc_backups, no_date_dir, increment_tmp_path)
     end
 
   end
 
   # prepares a specific backup.
-  def self.prepare_specific(output_dir, backup_base_dir, backup_dir, no_date_dir)
+  def self.prepare_specific(output_dir, backup_base_dir, backup_dir, no_date_dir, increment_tmp_path)
     backup = self.find_backup(backup_dir)
 
     if backup.class == Xtrabackup::FullBackup
@@ -45,13 +45,13 @@ module Xtrabackup
     elsif backup.class == Xtrabackup::IncBackup
       full_backups = self.find_backups(self.full_backup_path(backup_base_dir))
       inc_backups = self.find_backups(self.incremental_backup_path(backup_base_dir))
-      self.prepare_incremental(output_dir, full_backups, backup, inc_backups, no_date_dir)
+      self.prepare_incremental(output_dir, full_backups, backup, inc_backups, no_date_dir, increment_tmp_path)
     end
   end
 
   private
 
-  def self.prepare_incremental(output_dir, full_backups, inc_backup, all_inc_backups, no_date_dir)
+  def self.prepare_incremental(output_dir, full_backups, inc_backup, all_inc_backups, no_date_dir, increment_tmp_path)
     chain = self.backup_chain_for_increment(inc_backup, all_inc_backups, full_backups)
     last_increment = chain.last
 
@@ -67,17 +67,40 @@ module Xtrabackup
 
 
     chain.each_with_index do |backup, index|
+
+      if (increment_tmp_path)
+        FileUtils.mkdir_p(increment_tmp_path);
+        FileUtils.rm_r(increment_tmp_path);
+      end
+
       if index == 0
         puts "Preparing full backup #{backup.from_lsn} -> #{backup.to_lsn} in #{dest_dir} ..."
         self.innobackupex_cmd("--apply-log --redo-only #{dest_dir}")
-      elsif backup == last_increment
+      elsif backup == last_increment        
+
+        if (increment_tmp_path)
+          FileUtils.cp_r(backup.path, increment_tmp_path)
+        end
+
         puts "Applying the last increment ##{index} #{backup.from_lsn} -> #{backup.to_lsn} to #{dest_dir} ..."
-        self.innobackupex_cmd("--apply-log #{dest_dir} --incremental-dir=#{backup.path}")
+        self.innobackupex_cmd("--apply-log #{dest_dir} --incremental-dir=" + (increment_tmp_path ? increment_tmp_path : backup.path));
+
       else
+
+        if (increment_tmp_path)
+          FileUtils.cp_r(backup.path, increment_tmp_path)
+        end        
+
         puts "Applying incremental backup ##{index} #{backup.from_lsn} -> #{backup.to_lsn} to #{dest_dir} ..."
-        self.innobackupex_cmd("--apply-log --redo-only #{dest_dir} --incremental-dir=#{backup.path}")
+        self.innobackupex_cmd("--apply-log --redo-only #{dest_dir} --incremental-dir=" + (increment_tmp_path ? increment_tmp_path : backup.path));
+ 
       end
     end
+
+
+    if (increment_tmp_path)
+      FileUtils.rm_r(increment_tmp_path);
+    end    
 
     puts "Prepare to rollback uncommited changes in #{dest_dir} ..."
     self.innobackupex_cmd("--apply-log #{dest_dir}")
