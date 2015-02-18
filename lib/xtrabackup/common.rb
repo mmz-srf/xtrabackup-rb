@@ -90,11 +90,8 @@ module Xtrabackup
   def self.innobackupex_cmd(args)
     out = `#{INNOBACKUPEX} #{args} 2>&1`
     lines = out.split(/\n/)
-    begin
-      path = lines[-3].scan(/'(.+)'/).first.first
-    rescue
-      path = nil
-    end
+    path = nil
+    lines.grep(/Backup created in directory /){|x| path = x.match(/'(.+)'/)[1] }
     lastline = lines.last
     success = $?.exitstatus == 0 and lastline =~ /completed OK!$/
     raise "#{INNOBACKUPEX} failed: #{lastline}" if !success
