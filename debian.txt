@@ -1,3 +1,9 @@
+Look at debian-build-package.md
+
+
+OLD documentation:
+
+
 Turn the gem into a (dirty) debian package:
 
 > gem install fpm
