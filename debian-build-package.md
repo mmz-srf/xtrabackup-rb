@@ -1,7 +1,7 @@
 ## Turn the gem into a (dirty) debian package
-* Get a running Debian instance with the OS version you want to buidl the package for.
-* Change version in version.txt to new value
-* CD into root folder of this repository
+* Get a running Debian instance with the os AND ruby version you want to build the package for.
+* Increment version number in version.txt
+* Switch into root folder of this repository
 
 ```
 apt-get install ruby-dev
