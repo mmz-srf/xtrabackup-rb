@@ -10,7 +10,7 @@ gem install fpm bundler rspec
 bundle install
 rake build
 
-GEM_HOME=opt/xtrabackup-rb gem install --no-ri --no-rdoc pkg/xtrabackup-rb-$(cat version.txt).gem
+GEM_HOME=opt/xtrabackup-rb gem install -N pkg/xtrabackup-rb-$(cat version.txt).gem
 
 
 mkdir -p usr/bin
