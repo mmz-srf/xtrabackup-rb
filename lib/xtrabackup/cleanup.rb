@@ -27,6 +27,16 @@ module Xtrabackup
       end if to_delete
       puts
     end
+
+    referenced_inc_backups = chains.map { |chain|
+      chain.select{ |backup| backup.is_a?(Xtrabackup::IncBackup) }
+    }.flatten
+
+    (self.find_backups(self.incremental_backup_path(dir)).map{|b| b.path} - referenced_inc_backups.map{|b| b.path}).each do |noref|
+      FileUtils.rm_r(noref)
+      puts "Deleted unreferenced incremental backup: #{noref}"
+    end
+
   end
 
 
